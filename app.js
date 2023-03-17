@@ -1,6 +1,7 @@
 const express = require("express");
 const ejs = require("ejs");
 const _ = require("lodash");
+const mongoose = require("mongoose");
 
 const app = express();
 const port = 3000;
@@ -18,23 +19,34 @@ app.use(express.urlencoded({extended: true})); // DOPLNIT
 app.use(express.static("public")); // DOPLNIT
 
 
-let listOfPosts = [
-  {
-    title: "Hello",
-    content: contactContent
-  },
-  {
-    title: "Good evening",
-    content: aboutContent
+// Connecting with MongoDB Atlas
+mongoose.connect("mongodb+srv://OndraS:bloody44@cluster0.lsbfvmo.mongodb.net/BlogWebpage");
+
+//Create post schema
+const postSchema = new mongoose.Schema({
+  postTitle: String,
+  postContent: String,
+  postDate: {
+    type: Date,
+    default: Date.now
   }
-];
+});
+
+// Create collection/model
+const Post = mongoose.model("Post", postSchema);
 
 // HOME
 app.get(["/", "/home"],(req, res) => {
-  res.render("home", {
-    paragraphHome: homeStartingContent, 
-    posts: listOfPosts
-  });
+  Post.find({})
+    .then((posts) => {
+      res.render("home", {
+        paragraphHome: homeStartingContent, 
+        posts: posts
+      });
+    })
+    .catch(function (err) {
+      console.log(err);
+    });
 });
 
 // ABOUT
@@ -53,52 +65,52 @@ app.get("/contact", (req, res) => {
 
 // COMPOSE
 app.get("/compose", (req, res) => {
-  res.render("compose", {
-    paragraphContact: contactContent
-  });
-  
+  res.render("compose");
 });
 
 app.post("/compose", (req, res) => {
   let postTitle = req.body.composeTitle;
   let postContent = req.body.composePost;
-  let postDate = new Date().toLocaleDateString("cs-CZ");;
-  
-  const post = {
-    title: postTitle ,
-    content: postContent, 
-    date: postDate
-  };
-  listOfPosts.push(post);
-  console.log(listOfPosts);
+
+  const post = new Post ({
+    postTitle: postTitle,
+    postContent: postContent
+  });
+
+  post.save();
   res.redirect("/");
 })
 
-//POST
+app.get("/post/:postId", (req, res) => { 
+  const requestedPostId = req.params.postId;
 
-// app.get("/post", (req, res) => {
-//   res.render("post", {
-//     posts: listOfPosts
-//   });
-// });
-
-
-app.get("/post/:postName", (req, res) => { 
-  let requestedPost = _.kebabCase(req.params.postName);
-
-  listOfPosts.forEach((post) => {
-    const storedPost = _.kebabCase(post.title);
-    
-    if (storedPost === requestedPost) {
+  Post.findOne({ _id: requestedPostId})
+    .then((posts) => {
       res.render("post", {
-        postTitle: post.title,
-        postText: post.content,
-        postDate: post.date
+        postTitle: posts.postTitle,
+        postContent: posts.postContent,
+        postDate: posts.postDate
       });
-    }
-  });
+    })
+    .catch(function (err) {
+      console.log(err);
+    });
+
+  
 })
-// :postName představuje pouze název paramentru ne jeho hodnotu. Místo něho můžeme napsat jakékoliv slovo, které se ale bude ve finále ukládat a následně volat pod parametrem postName
+// :postId představuje pouze název paramentru ne jeho hodnotu. Místo něho můžeme napsat jakékoliv slovo, které se ale bude ve finále ukládat a následně volat pod parametrem postName
+
+app.post("/delete", (req, res) => {
+  const deletePostId = req.body.deleteId;
+  
+  Post.findByIdAndDelete({ _id: deletePostId })
+  .then(() => {
+    res.redirect("/");
+  })
+  .catch((err) => {
+    console.log(err);
+  })
+})
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)

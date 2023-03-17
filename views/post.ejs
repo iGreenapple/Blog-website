@@ -1,7 +1,7 @@
 <%- include("partials/header"); -%>
 
 <h1> <%= postTitle%></h1>
-<p> <%= postDate%> </p>
-<p> <%= postText%> </p>
+<p> <em><%= postDate.toLocaleString('en-GB', "full")%></em> </p>
+<p> <%= postContent%> </p>
 
 <%- include("partials/footer"); -%>

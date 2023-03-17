@@ -5,18 +5,24 @@
 
 <div class="container-fluid mt-3">
   
-  <% posts. forEach((item) => { %>
-    <article class="mb-3">
-      <h2 class="postHeading">
-        <%= item.title %>
-      </h2>
-      <p><%= item.date %></p>
-      <p>
+  <% posts. forEach((post) => { %>
+    <!-- <a href="/post/<%=post._id%>"> -->
+      <article class="mb-3 post" onclick="window.location.href='/post/<%= post._id %>'">
+          <form class="delete-form" action="/delete" method="post">
+            <button type="submit" class="delete-button fa-solid fa-trash fa-lg" name="deleteId" value="<%= post._id %>"> </button>
+          </form>
+        <h2 class="postHeading">
+          <%= post.postTitle %>
+        </h2>
         
-        <%= item.content.substring(0,100) + " ..."%>
-        <a href="/post/<%=item.title%>">Read more...</a>
-      </p>
-    </article>
+        <p><em><%= post.postDate.toLocaleString('en-GB', "full")%></em></p>
+        <p>
+          
+          <%= post.postContent.substring(0,300) + " ..."%>
+          
+        </p>
+      </article>
+    <!-- </a> -->
   <% }) %>
   
 </div>
